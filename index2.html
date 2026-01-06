@@ -174,26 +174,6 @@
             cursor: not-allowed;
         }
         
-        .play-button {
-            padding: 6px 12px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: background 0.3s;
-        }
-        
-        .play-button:hover {
-            background: #45a049;
-        }
-        
-        .play-button.playing {
-            background: #ff5722;
-        }
-        
         .typing-indicator {
             display: flex;
             gap: 4px;
@@ -261,9 +241,7 @@
         let isProcessing = false;
         let voiceEnabled = true;
         let currentSpeech = null;
-        let selectedLanguage = 'ja';
-        let speechQueue = [];
-        let isSpeaking = false;
+        let selectedLanguage = 'ja'; // デフォルトは日本語
         
         // 音声合成の初期化チェック
         if (!('speechSynthesis' in window)) {
@@ -272,17 +250,13 @@
             languageSelect.disabled = true;
         }
         
-        // iOS用：音声の初期化（ユーザー操作で一度実行する必要がある）
-        function initializeSpeech() {
-            const utterance = new SpeechSynthesisUtterance('');
-            speechSynthesis.speak(utterance);
-            speechSynthesis.cancel();
-        }
-        
         // 言語選択の変更イベント
         languageSelect.addEventListener('change', (e) => {
             selectedLanguage = e.target.value;
-            stopAllSpeech();
+            // 再生中の音声を停止
+            if (currentSpeech) {
+                speechSynthesis.cancel();
+            }
         });
         
         // 音声ON/OFFトグル
@@ -291,91 +265,70 @@
             if (voiceEnabled) {
                 voiceToggle.innerHTML = '<span class="speaker-icon">🔊</span>音声ON';
                 voiceToggle.classList.remove('off');
-                initializeSpeech();
             } else {
                 voiceToggle.innerHTML = '<span class="speaker-icon">🔇</span>音声OFF';
                 voiceToggle.classList.add('off');
-                stopAllSpeech();
+                // 再生中の音声を停止
+                if (currentSpeech) {
+                    speechSynthesis.cancel();
+                }
             }
         });
         
-        // 全ての音声を停止
-        function stopAllSpeech() {
+        // テキストを音声で読み上げる関数
+        function speakText(text) {
+            if (!voiceEnabled || !text) return;
+            
+            // 既存の音声を停止
             speechSynthesis.cancel();
-            speechQueue = [];
-            isSpeaking = false;
-            currentSpeech = null;
-            voiceStatus.textContent = '';
-        }
-        
-        // テキストを音声で読み上げる関数（ユーザー操作トリガー用）
-        function speakTextOnDemand(text, button) {
-            if (!text) return;
-            
-            stopAllSpeech();
-            
-            button.textContent = '⏸️ 停止';
-            button.classList.add('playing');
             
             // マークダウン記号を除去
             let cleanText = text
-                .replace(/\*\*/g, '')
-                .replace(/\*/g, '')
-                .replace(/#{1,6}\s/g, '')
-                .replace(/:/g, '');
+                .replace(/\*\*/g, '') // **太字** を除去
+                .replace(/\*/g, '')   // *斜体* を除去
+                .replace(/#{1,6}\s/g, '') // # 見出し記号を除去
+                .replace(/:/g, ''); // コロンを除去
             
-            // 文章を分割
-            const sentences = cleanText.match(/[^。.!?]+[。.!?]+/g) || [cleanText];
+            const utterance = new SpeechSynthesisUtterance(cleanText);
             
-            sentences.forEach(sentence => {
-                const utterance = new SpeechSynthesisUtterance(sentence.trim());
-                
-                const voices = speechSynthesis.getVoices();
-                let targetVoice;
-                
-                if (selectedLanguage === 'ja') {
-                    targetVoice = voices.find(voice => voice.lang.startsWith('ja'));
-                    utterance.lang = 'ja-JP';
-                } else {
-                    targetVoice = voices.find(voice => voice.lang.startsWith('en'));
-                    utterance.lang = 'en-US';
-                }
-                
-                if (targetVoice) {
-                    utterance.voice = targetVoice;
-                }
-                
-                utterance.rate = 1.0;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-                
-                utterance.onstart = () => {
-                    isSpeaking = true;
-                    const langLabel = selectedLanguage === 'ja' ? '日本語' : 'English';
-                    voiceStatus.textContent = `🎤 読み上げ中... (${langLabel})`;
-                };
-                
-                utterance.onend = () => {
-                    setTimeout(() => {
-                        if (!speechSynthesis.speaking) {
-                            isSpeaking = false;
-                            voiceStatus.textContent = '';
-                            button.textContent = '▶️ 再生';
-                            button.classList.remove('playing');
-                        }
-                    }, 100);
-                };
-                
-                utterance.onerror = (event) => {
-                    console.error('Speech error:', event);
-                    isSpeaking = false;
-                    voiceStatus.textContent = '';
-                    button.textContent = '▶️ 再生';
-                    button.classList.remove('playing');
-                };
-                
-                speechSynthesis.speak(utterance);
-            });
+            // 選択された言語の音声を設定
+            const voices = speechSynthesis.getVoices();
+            let targetVoice;
+            
+            if (selectedLanguage === 'ja') {
+                targetVoice = voices.find(voice => voice.lang.startsWith('ja'));
+                utterance.lang = 'ja-JP';
+            } else {
+                targetVoice = voices.find(voice => voice.lang.startsWith('en'));
+                utterance.lang = 'en-US';
+            }
+            
+            if (targetVoice) {
+                utterance.voice = targetVoice;
+            }
+            
+            utterance.rate = 1.0; // 話す速度
+            utterance.pitch = 1.0; // 声の高さ
+            utterance.volume = 1.0; // 音量
+            
+            utterance.onstart = () => {
+                currentSpeech = utterance;
+                const langLabel = selectedLanguage === 'ja' ? '日本語' : 'English';
+                voiceStatus.textContent = `🎤 読み上げ中... (${langLabel})`;
+            };
+            
+            utterance.onend = () => {
+                currentSpeech = null;
+                voiceStatus.textContent = '';
+            };
+            
+            utterance.onerror = (event) => {
+                console.error('Speech error:', event);
+                currentSpeech = null;
+                voiceStatus.textContent = '';
+            };
+            
+            speechSynthesis.speak(utterance);
         }
         
         // 音声リストの読み込みを待つ
@@ -389,28 +342,6 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
             messageDiv.innerHTML = text.replaceAll('\n', '<br>');
-            
-            // AIメッセージの場合、再生ボタンを追加
-            if (!isUser && text && voiceEnabled) {
-                const playButton = document.createElement('button');
-                playButton.className = 'play-button';
-                playButton.textContent = '▶️ 再生';
-                playButton.onclick = function() {
-                    if (this.classList.contains('playing')) {
-                        stopAllSpeech();
-                        this.textContent = '▶️ 再生';
-                        this.classList.remove('playing');
-                    } else {
-                        document.querySelectorAll('.play-button').forEach(btn => {
-                            btn.textContent = '▶️ 再生';
-                            btn.classList.remove('playing');
-                        });
-                        speakTextOnDemand(text, this);
-                    }
-                };
-                messageDiv.appendChild(playButton);
-            }
-            
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             return messageDiv;
@@ -461,37 +392,14 @@
                     if (part?.text) {
                         fullText += part.text;
                         assistantMessage.innerHTML = fullText.replaceAll('\n', '<br>');
-                        
-                        // ボタンを再追加
-                        if (voiceEnabled) {
-                            const existingButton = assistantMessage.querySelector('.play-button');
-                            if (existingButton) {
-                                existingButton.remove();
-                            }
-                            const playButton = document.createElement('button');
-                            playButton.className = 'play-button';
-                            playButton.textContent = '▶️ 再生';
-                            playButton.onclick = function() {
-                                if (this.classList.contains('playing')) {
-                                    stopAllSpeech();
-                                    this.textContent = '▶️ 再生';
-                                    this.classList.remove('playing');
-                                } else {
-                                    document.querySelectorAll('.play-button').forEach(btn => {
-                                        btn.textContent = '▶️ 再生';
-                                        btn.classList.remove('playing');
-                                    });
-                                    speakTextOnDemand(fullText, this);
-                                }
-                            };
-                            assistantMessage.appendChild(playButton);
-                        }
-                        
                         messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     }
                 }
 
                 assistantMessage.classList.remove('streaming');
+                
+                // AIの回答を音声で読み上げ
+                speakText(fullText);
             } catch (error) {
                 removeTypingIndicator();
                 addMessage('エラーが発生しました: ' + error.message, false);
