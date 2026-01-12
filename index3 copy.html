@@ -230,7 +230,11 @@
                 <span class="speaker-icon">🔊</span>
                 音声ON
             </button>
-            <select class="language-select" id="modelSelect" title="モデル選択" style="font-weight:normal;">
+            <select class="language-select" id="languageSelect">
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="en">🇺🇸 English</option>
+            </select>
+            <select class="language-select" id="modelSelect" title="モデル選択">
                 <option value="o3-mini">o3-mini</option>
                 <option value="gemini-2.5-flash">gemini-2.5-flash</option>
                 <option value="claude-sonnet-4.5" selected>claude-sonnet-4.5</option>
@@ -257,11 +261,13 @@
         const sendButton = document.getElementById('send');
         const voiceToggle = document.getElementById('voiceToggle');
         const voiceStatus = document.getElementById('voiceStatus');
+        const languageSelect = document.getElementById('languageSelect');
         const modelSelect = document.getElementById('modelSelect');
         
         let isProcessing = false;
         let voiceEnabled = true;
         let currentSpeech = null;
+        let selectedLanguage = 'ja';
         let selectedModel = 'claude-sonnet-4.5';
         let speechQueue = [];
         let isSpeaking = false;
@@ -280,6 +286,11 @@
             speechSynthesis.cancel();
         }
         
+        // 言語選択の変更イベント
+        languageSelect.addEventListener('change', (e) => {
+            selectedLanguage = e.target.value;
+            stopAllSpeech();
+        });
         // モデル選択の変更イベント
         modelSelect.addEventListener('change', (e) => {
             selectedModel = e.target.value;
@@ -464,57 +475,4 @@
                         assistantMessage.innerHTML = fullText.replaceAll('\n', '<br>');
                         
                         // ボタンを再追加
-                        if (voiceEnabled) {
-                            const existingButton = assistantMessage.querySelector('.play-button');
-                            if (existingButton) {
-                                existingButton.remove();
-                            }
-                            const playButton = document.createElement('button');
-                            playButton.className = 'play-button';
-                            playButton.textContent = '▶️ 再生';
-                            playButton.onclick = function() {
-                                if (this.classList.contains('playing')) {
-                                    stopAllSpeech();
-                                    this.textContent = '▶️ 再生';
-                                    this.classList.remove('playing');
-                                } else {
-                                    document.querySelectorAll('.play-button').forEach(btn => {
-                                        btn.textContent = '▶️ 再生';
-                                        btn.classList.remove('playing');
-                                    });
-                                    speakTextOnDemand(fullText, this);
-                                }
-                            };
-                            assistantMessage.appendChild(playButton);
-                        }
-                        
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    }
-                }
-
-                assistantMessage.classList.remove('streaming');
-            } catch (error) {
-                removeTypingIndicator();
-                addMessage('エラーが発生しました: ' + error.message, false);
-            }
-
-            isProcessing = false;
-            sendButton.disabled = false;
-            inputField.disabled = false;
-            inputField.focus();
-        }
-
-        sendButton.addEventListener('click', sendMessage);
-        
-        inputField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // 初期フォーカス
-        inputField.focus();
-    </script>
-</body>
-</html>
+                        if
