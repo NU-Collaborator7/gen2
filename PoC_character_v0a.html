@@ -1,8 +1,9 @@
+
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Andorid版]Multi-model AI chat with voice support(音声対応のマルチモデルAIチャット)</title>
+    <title>[Android版]Multi-model AI chat with voice support(音声対応のマルチモデルAIチャット)</title>
     <style>
         * {
             margin: 0;
@@ -250,6 +251,7 @@
         let currentSpeech = null;
         let selectedLanguage = 'ja';
         let selectedModel = 'claude-sonnet-4.5';
+        let conversationHistory = [];
         
         // 音声合成の初期化チェック
         if (!('speechSynthesis' in window)) {
@@ -393,10 +395,16 @@
             addMessage(userMessage, true);
             inputField.value = '';
 
+            // 会話履歴に追加
+            conversationHistory.push({
+                role: 'user',
+                content: messageToSend
+            });
+
             showTypingIndicator();
 
             try {
-                const chat_resp = await puter.ai.chat(messageToSend, {
+                const chat_resp = await puter.ai.chat(conversationHistory, {
                     model: selectedModel,
                     stream: true
                 });
@@ -416,6 +424,12 @@
                 }
 
                 assistantMessage.classList.remove('streaming');
+                
+                // アシスタントの回答を会話履歴に追加
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: fullText
+                });
                 
                 speakText(fullText);
             } catch (error) {
