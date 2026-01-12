@@ -251,6 +251,7 @@
         let currentSpeech = null;
         let selectedLanguage = 'ja';
         let selectedModel = 'claude-sonnet-4.5';
+        let conversationHistory = [];
         
         // 音声合成の初期化チェック
         if (!('speechSynthesis' in window)) {
@@ -390,10 +391,17 @@
             addMessage(message, true);
             inputField.value = '';
 
+            // ユーザーメッセージを履歴に追加
+            conversationHistory.push({
+                role: 'user',
+                content: message
+            });
+
             showTypingIndicator();
 
             try {
-                const chat_resp = await puter.ai.chat(message, {
+                // 会話履歴全体を送信
+                const chat_resp = await puter.ai.chat(conversationHistory, {
                     model: selectedModel,
                     stream: true
                 });
@@ -414,10 +422,18 @@
 
                 assistantMessage.classList.remove('streaming');
                 
+                // アシスタントの応答を履歴に追加
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: fullText
+                });
+                
                 speakText(fullText);
             } catch (error) {
                 removeTypingIndicator();
                 addMessage('エラーが発生しました: ' + error.message, false);
+                // エラー時は最後のユーザーメッセージを履歴から削除
+                conversationHistory.pop();
             }
 
             isProcessing = false;
