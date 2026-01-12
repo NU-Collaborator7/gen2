@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音声対応：日本語_英語チャット</title>
+    <title>[Andorid版]Multi-model AI chat with voice support(音声対応のマルチモデルAIチャット)</title>
     <style>
         * {
             margin: 0;
@@ -224,7 +224,6 @@
 </head>
 <body>
     <div class="chat-container">
-        <div class="chat-header">AI チャット</div>
         <div class="voice-controls">
             <button class="voice-toggle" id="voiceToggle">
                 <span class="speaker-icon">🔊</span>
@@ -235,9 +234,9 @@
                 <option value="en">🇺🇸 English</option>
             </select>
             <select class="language-select" id="modelSelect">
-                <option value="claude-sonnet-4.5">🤖 Claude Sonnet 4.5</option>
-                <option value="o3-mini">🧠 O3-Mini</option>
-                <option value="gemini-2.0-flash">✨ Gemini 2.0 Flash</option>
+                <option value="claude-sonnet-4.5">Claude Sonnet 4.5(自然な文章とプログラミング)</option>
+                <option value="o3-mini">O3-Mini(論理的思考と理数系タスク)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash(スピードと情報量)</option>
             </select>
             <span class="voice-status" id="voiceStatus"></span>
         </div>
@@ -334,7 +333,16 @@
                 .replace(/\*\*/g, '')
                 .replace(/\*/g, '')
                 .replace(/#{1,6}\s/g, '')
-                .replace(/:/g, '');
+                .replace(/:/g, '')
+                .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // 顔文字
+                .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // その他のシンボル
+                .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // 交通機関と地図記号
+                .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // 国旗
+                .replace(/[\u{2600}-\u{26FF}]/gu, '')   // その他の記号
+                .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+                .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // 補助的な記号とピクトグラフ
+                .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '') // 拡張A
+                .replace(/[\u{1FA70}-\u{1FAFF}]/gu, ''); // 拡張B
             
             // 文章を分割
             const sentences = cleanText.match(/[^。.!?]+[。.!?]+/g) || [cleanText];
