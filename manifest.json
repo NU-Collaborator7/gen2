@@ -1,7 +1,7 @@
 {
-	"name":				"",
-	"short_name":		"",
-	"description":		"",
+	"name":				"AI Chat(gen2)",
+	"short_name":		"AI Chat(gen2",
+	"description":		"AI chat(gen2",
 	"start_url":		"/gen2/",
 	"display":			"standalone",
 	"orientation":		"any",
