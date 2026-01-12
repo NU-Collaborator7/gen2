@@ -298,6 +298,15 @@
                 .replace(/\*/g, '')
                 .replace(/#{1,6}\s/g, '')
                 .replace(/:/g, '');
+                .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // 顔文字
+                .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // その他のシンボル
+                .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // 交通機関と地図記号
+                .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // 国旗
+                .replace(/[\u{2600}-\u{26FF}]/gu, '')   // その他の記号
+                .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+                .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // 補助的な記号とピクトグラフ
+                .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '') // 拡張A
+                .replace(/[\u{1FA70}-\u{1FAFF}]/gu, ''); // 拡張B
             
             const utterance = new SpeechSynthesisUtterance(cleanText);
             
