@@ -224,7 +224,7 @@
 </head>
 <body>
     <div class="chat-container">
-
+        <div class="chat-header">AI チャット</div>
         <div class="voice-controls">
             <button class="voice-toggle" id="voiceToggle">
                 <span class="speaker-icon">🔊</span>
@@ -234,10 +234,10 @@
                 <option value="ja">🇯🇵 日本語</option>
                 <option value="en">🇺🇸 English</option>
             </select>
-            <select class="language-select" id="modelSelect" title="モデル選択">
-                <option value="o3-mini">o3-mini</option>
-                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                <option value="claude-sonnet-4.5" selected>claude-sonnet-4.5</option>
+            <select class="language-select" id="modelSelect">
+                <option value="claude-sonnet-4.5">🤖 Claude Sonnet 4.5</option>
+                <option value="o3-mini">🧠 O3-Mini</option>
+                <option value="gemini-2.0-flash">✨ Gemini 2.0 Flash</option>
             </select>
             <span class="voice-status" id="voiceStatus"></span>
         </div>
@@ -276,7 +276,7 @@
         if (!('speechSynthesis' in window)) {
             voiceStatus.textContent = '⚠️ お使いのブラウザは音声合成に対応していません';
             voiceToggle.disabled = true;
-            modelSelect.disabled = true;
+            languageSelect.disabled = true;
         }
         
         // iOS用：音声の初期化（ユーザー操作で一度実行する必要がある）
@@ -291,10 +291,10 @@
             selectedLanguage = e.target.value;
             stopAllSpeech();
         });
+        
         // モデル選択の変更イベント
         modelSelect.addEventListener('change', (e) => {
             selectedModel = e.target.value;
-            stopAllSpeech();
         });
         
         // 音声ON/OFFトグル
@@ -345,7 +345,7 @@
                 const voices = speechSynthesis.getVoices();
                 let targetVoice;
                 
-                if (selectedModel === 'ja') {
+                if (selectedLanguage === 'ja') {
                     targetVoice = voices.find(voice => voice.lang.startsWith('ja'));
                     utterance.lang = 'ja-JP';
                 } else {
@@ -363,7 +363,7 @@
                 
                 utterance.onstart = () => {
                     isSpeaking = true;
-                    const langLabel = selectedModel === 'ja' ? '日本語' : 'English';
+                    const langLabel = selectedLanguage === 'ja' ? '日本語' : 'English';
                     voiceStatus.textContent = `🎤 読み上げ中... (${langLabel})`;
                 };
                 
@@ -475,4 +475,57 @@
                         assistantMessage.innerHTML = fullText.replaceAll('\n', '<br>');
                         
                         // ボタンを再追加
-                        if
+                        if (voiceEnabled) {
+                            const existingButton = assistantMessage.querySelector('.play-button');
+                            if (existingButton) {
+                                existingButton.remove();
+                            }
+                            const playButton = document.createElement('button');
+                            playButton.className = 'play-button';
+                            playButton.textContent = '▶️ 再生';
+                            playButton.onclick = function() {
+                                if (this.classList.contains('playing')) {
+                                    stopAllSpeech();
+                                    this.textContent = '▶️ 再生';
+                                    this.classList.remove('playing');
+                                } else {
+                                    document.querySelectorAll('.play-button').forEach(btn => {
+                                        btn.textContent = '▶️ 再生';
+                                        btn.classList.remove('playing');
+                                    });
+                                    speakTextOnDemand(fullText, this);
+                                }
+                            };
+                            assistantMessage.appendChild(playButton);
+                        }
+                        
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
+                }
+
+                assistantMessage.classList.remove('streaming');
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage('エラーが発生しました: ' + error.message, false);
+            }
+
+            isProcessing = false;
+            sendButton.disabled = false;
+            inputField.disabled = false;
+            inputField.focus();
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // 初期フォーカス
+        inputField.focus();
+    </script>
+</body>
+</html>
