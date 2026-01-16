@@ -366,8 +366,8 @@
                     utterance.voice = targetVoice;
                 }
                 
-                utterance.rate = 0.9;
-                utterance.pitch = 0.1;
+                utterance.rate = 1.1;
+                utterance.pitch = 1.1;
                 utterance.volume = 1.0;
                 
                 utterance.onstart = () => {
@@ -458,7 +458,7 @@
             if (!userMessage) return;
 
             // 追加: API送信用にキャラクター指示を付与
-            const appendedInstruction = '阪神タイガース好きの綺麗なお姉さんとして回答して';
+            const appendedInstruction = '阪神タイガース好きの綺麗なお姉さんとして男性に好かれるような回答して';
             const messageToSend = `${userMessage}\n\n${appendedInstruction}`;
 
             isProcessing = true;
